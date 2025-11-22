@@ -286,4 +286,6 @@ With prefix argument (C-u), prompt for tags to filter by, then optionally a quer
         (when selected
           (find-file selected))))))
 
+(provide 'zk-eglot)
+
 ;;; zk-eglot.el ends here
