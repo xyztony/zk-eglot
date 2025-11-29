@@ -22,19 +22,20 @@
 ;; https://zk-org.github.io/zk/tips/editors-integration.html
 ;;
 ;; Usage:
-;; (add-hook 'markdown-mode-hook
-;;           (lambda ()
-;;             (when (locate-dominating-file default-directory ".zk")
-;;               (eglot-ensure))))
-;; add some custom zk aliases with `zk-define-new`
+;; (add-hook 'markdown-mode-hook #'zk-mode-maybe-enable)
+;;
+;; With use-package:
+;; (use-package zk-eglot
+;;   :hook (markdown-mode . zk-mode-maybe-enable)
+;;   :bind (:map zk-mode-map
+;;          ("C-c z i" . zk-index)
+;;          ("C-c z n" . zk-new)
+;;          ("C-c z l" . zk-list)
+;;          ("C-c z r" . zk-list-recent)
+;;          ("C-c z k" . zk-link)))
+;;
+;; Define custom zk aliases with `zk-define-new`:
 ;; (zk-define-new zk-new-daily :dir "journal/daily")
-;; example bindings:
-;; (with-eval-after-load 'eglot
-;;   (define-key eglot-mode-map (kbd "C-c z i") #'zk-index)
-;;   (define-key eglot-mode-map (kbd "C-c z n") #'zk-new)
-;;   (define-key eglot-mode-map (kbd "C-c z l") #'zk-list)
-;;   (define-key eglot-mode-map (kbd "C-c z r") #'zk-list-recent)
-;;   (define-key eglot-mode-map (kbd "C-c z k") #'zk-link))
 
 ;;; Code:
 
@@ -46,6 +47,35 @@
   "Eglot integration for the zk note-taking tool."
   :group 'tools
   :prefix "zk-")
+
+(defcustom zk-mode-auto-eglot t
+  "When non-nil, automatically start Eglot when `zk-mode' is enabled."
+  :type 'boolean
+  :group 'zk-eglot)
+
+(defvar zk-mode-map
+  (let ((map (make-sparse-keymap)))
+    map)
+  "Keymap for `zk-mode'.")
+
+;;;###autoload
+(define-minor-mode zk-mode
+  "Minor mode for zk with Eglot.
+Provides keybindings for zk commands when enabled.
+
+When `zk-mode-auto-eglot' is non-nil, automatically starts Eglot."
+  :lighter " zk"
+  :keymap zk-mode-map
+  :group 'zk-eglot
+  (when (and zk-mode zk-mode-auto-eglot)
+    (eglot-ensure)))
+
+;;;###autoload
+(defun zk-mode-maybe-enable ()
+  "Enable `zk-mode' if current buffer is in a zk notebook.
+A zk notebook is detected by the presence of a .zk directory."
+  (when (locate-dominating-file default-directory ".zk")
+    (zk-mode 1)))
 
 ;; Add zk to the list of LSP servers that Eglot knows about
 (with-eval-after-load 'eglot
